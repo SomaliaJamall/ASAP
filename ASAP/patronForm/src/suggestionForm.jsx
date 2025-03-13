@@ -3,7 +3,6 @@ import { ToastContainer, toast } from 'react-toastify';
 
 
 function SuggestionForm() {
-    const [count, setCount] = useState(0);
     function submitform(event) {
         event.preventDefault();
         const form = event.target;
@@ -14,7 +13,16 @@ function SuggestionForm() {
             data[key] = value;
         });
 
+        data["status"] = 1;
         const json = JSON.stringify(data);
+        console.log(json);
+        fetch("/PHP/asap/AddTitleRequest.php", {
+            method: "POST",
+            body: json,
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        });
         toast.success("Your material suggestion has been submitted!");
     }
 

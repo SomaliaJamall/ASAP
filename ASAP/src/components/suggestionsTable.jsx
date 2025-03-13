@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
+import { useState, useEffect } from 'react';
 import * as Constants from '../assets/Constants';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
@@ -12,49 +12,130 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { ToastContainer, toast } from 'react-toastify';
+import APIurl from '../App'
 
-const rows = [
+
+const myrows = [
   { id: 1, title: 'Frankenstien', author: 'Mary Shelly', isbn: '000000000', format: 'Book', publication: '1923', status: 'Suggested' },
 ];
 
+
+
 export default function SuggestionsTable() {
-  const columns = [
-    { field: 'title', headerName: 'Title', width: 150 },
-    { field: 'author', headerName: 'Author', width: 150 },
-    { field: 'isbn', headerName: 'ISBN/ISSN', width: 150 },
-    { field: 'format', headerName: 'Format', width: 150 },
-    { field: 'publication', headerName: 'Publication Date', width: 150 },
-    {
-      field: "action",
-      headerName: "-",
-      sortable: false,
-      renderCell: (params) => {
-        const onClick = (e) => {
-          e.stopPropagation(); // don't select this row after clicking
 
-          const api = params.api;
-          const thisRow = {};
+  const [suggestions, setSuggestions] = useState([]);
 
-          api
-            .getAllColumns()
-            .filter((c) => c.field !== "__check__" && !!c)
-            .forEach(
-              (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
-            );
+  useEffect(() => {
+    fetchSuggestions();
+  }, []); // The empty array ensures the effect runs only once after the initial render
+  
+  function fetchSuggestions(){
+    fetch('/PHP/asap/TitleRequests.php')
+    //fetch('/staticData.json')
+      .then(response => response.json())
+      .then(data => groupData(data));
+  }
+  function groupData(data) {
+    var groupedArray = [[], [], [], [], []]
+    for (var row of data) {
+      groupedArray[(row.status - 1)].push(row);
+    }
 
-          return alert(JSON.stringify(thisRow, null, 4));
-        };
+    setSuggestions(groupedArray[0])
+  }
 
-        return (
-          <>
-            <Button onClick={handleClickOpen}>Sort</Button>
-          </>
-        )
-      }
-    },
-  ];
 
-  const [open, setOpen] = React.useState(false);
+  useEffect(() => {
+    console.log(suggestions);
+  }, [suggestions]);
+
+  const tableButtons = [{
+    field: "markPurchase",
+    headerName: " ",
+    sortable: false,
+    width: 100,
+    renderCell: (params) => {
+      const onClick = async (e) => {
+        e.stopPropagation(); // don't select this row after clicking
+
+        var thisRow = params.row;
+        thisRow["status"] = 2
+        const response = await fetch("/PHP/asap/UpdateTitleRequest.php", {
+          method: "POST",
+          body: JSON.stringify(thisRow),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8"
+          }
+        });
+        console.log(response.status)
+        if (response.status === 200) {
+          toast.success("This suggestion has been marked for purchase! <br/> The patron who made the suggestion will automatically recieve a hold on the material.");
+          fetchSuggestions();
+          console.log("ok");
+        }
+        return;
+      };
+
+      return (
+        <>
+          <Button variant="text" onClick={onClick}>Purchase</Button>
+        </>
+      )
+    }
+  }, {
+    field: "otherActions",
+    headerName: " ",
+    sortable: false,
+    width: 50,
+    renderCell: (params) => {
+      const onClick = (e) => {
+        e.stopPropagation(); // don't select this row after clicking
+        return;
+      };
+      const [anchorEl, setAnchorEl] = useState(null);
+      const open = Boolean(anchorEl);
+      const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+      };
+      const handleClose = () => {
+        setAnchorEl(null);
+      };
+
+      return (
+        <>
+          <IconButton aria-label="moreOptions"
+            aria-controls={open ? 'basic-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? 'true' : undefined}
+            onClick={handleClick}>
+            <MoreVertIcon />
+          </IconButton>
+          <Menu
+            id="basic-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            MenuListProps={{
+              'aria-labelledby': 'basic-button',
+            }}
+          >
+            <MenuItem onClick={handleClose}>ILL</MenuItem>
+            <MenuItem onClick={handleClose}>Already Own</MenuItem>
+            <MenuItem onClick={handleClose}>No Action</MenuItem>
+          </Menu>
+        </>
+      )
+    }
+  }]
+
+  const columns = Constants.columns.concat(tableButtons);
+
+  const [open, setOpen] = useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -66,54 +147,7 @@ export default function SuggestionsTable() {
 
   return (
     <>
-      <DataGrid rows={rows} columns={Constants.columns} />
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            component: 'form',
-            onSubmit: (event) => {
-              event.preventDefault();
-              const formData = new FormData(event.currentTarget);
-              const formJson = Object.fromEntries(formData.entries());
-              const email = formJson.email;
-              console.log(email);
-              handleClose();
-            },
-          },
-        }}
-      >
-        <DialogTitle>Sort this suggestion</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Decide of your library will purchase this item. Making a selection here will email all patrons who requested the item that their suggestion was reviewed, and the decision that was reached.
-          </DialogContentText>
-          <FormControl>
-            <FormLabel id="demo-radio-buttons-group-label">Suggestion Result</FormLabel>
-            <RadioGroup
-              aria-labelledby="demo-radio-buttons-group-label"
-              defaultValue="female"
-              name="radio-buttons-group"
-            >
-              1 suggestion
-              2 purchased
-              3 hold
-              4 Review
-              5 Closed
-              <FormControlLabel value="1" control={<Radio />} label="Suggestion" />
-              <FormControlLabel value="2" control={<Radio />} label="Purchase" />
-              <FormControlLabel value="3" control={<Radio />} label="Hold" />
-              <FormControlLabel value="4" control={<Radio />} label="Review" />
-              <FormControlLabel value="5" control={<Radio />} label="Closed" />
-            </RadioGroup>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit">Subscribe</Button>
-        </DialogActions>
-      </Dialog>
+      <DataGrid rows={suggestions} columns={columns} />
     </>
 
   );

@@ -13,5 +13,13 @@ export default defineConfig({
       usePolling: true
     }
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        patronForm: resolve(__dirname, 'patronForm/index.html'),
+      },
+    },
+  }
 })
 
