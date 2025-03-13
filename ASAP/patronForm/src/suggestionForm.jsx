@@ -15,7 +15,7 @@ function SuggestionForm() {
         });
 
         const json = JSON.stringify(data);
-        toast(json);
+        toast.success("Your material suggestion has been submitted!");
     }
 
     return (
@@ -92,7 +92,9 @@ function SuggestionForm() {
                     </div>
                 </div>
             </form>
-            <ToastContainer />
+            <ToastContainer 
+            position="bottom-right"
+            />
         </>
     )
 }

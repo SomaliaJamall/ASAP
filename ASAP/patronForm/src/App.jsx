@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import myLogo from './assets/jpl.png'
-import './App.css'
+import myLogo from '../../src/assets/jpl.png'
 import SuggestionForm from './suggestionForm'
+
 
 function App() {
   const [count, setCount] = useState(0)
