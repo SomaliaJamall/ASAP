@@ -49,9 +49,8 @@ const tableButtons = [{
                       'aria-labelledby': 'basic-button',
                   }}
               >
-                  <MenuItem onClick={handleClose}>ILL</MenuItem>
-                  <MenuItem onClick={handleClose}>Already Own</MenuItem>
-                  <MenuItem onClick={handleClose}>No Action</MenuItem>
+                  <MenuItem onClick={handleClose}>Remove</MenuItem>
+                  <MenuItem onClick={handleClose}>Move back to "Suggestion" table</MenuItem>
               </Menu>
           </>
       )

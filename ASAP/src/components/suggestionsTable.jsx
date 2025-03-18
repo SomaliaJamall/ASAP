@@ -74,7 +74,7 @@ export default function SuggestionsTable() {
         });
         console.log(response.status)
         if (response.status === 200) {
-          toast.success("This suggestion has been marked for purchase! <br/> The patron who made the suggestion will automatically recieve a hold on the material.");
+          toast.success("This suggestion has been marked for purchase! The patron who made the suggestion will automatically recieve a hold on the material.");
           fetchSuggestions();
           console.log("ok");
         }
@@ -105,6 +105,23 @@ export default function SuggestionsTable() {
       const handleClose = () => {
         setAnchorEl(null);
       };
+      const handleAlreadyOwn = async () => {
+        setAnchorEl(null);
+        var thisRow = params.row;
+        thisRow["status"] = 5
+        const response = await fetch("/PHP/asap/UpdateTitleRequest.php", {
+          method: "POST",
+          body: JSON.stringify(thisRow),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8"
+          }
+        });
+        console.log(response.status)
+        if (response.status === 200) {
+          toast.success("This suggestion has been marked as already owned! The patron who made the suggestion will recieve a hold on the material.");
+          fetchSuggestions();
+        }
+      };
 
       return (
         <>
@@ -125,7 +142,7 @@ export default function SuggestionsTable() {
             }}
           >
             <MenuItem onClick={handleClose}>ILL</MenuItem>
-            <MenuItem onClick={handleClose}>Already Own</MenuItem>
+            <MenuItem onClick={handleAlreadyOwn}>Already Own</MenuItem>
             <MenuItem onClick={handleClose}>No Action</MenuItem>
           </Menu>
         </>

@@ -84,7 +84,32 @@ const columns = Constants.columns.concat(tableButtons);
 
 
 export default function HoldsTable({rows}) {
+  const [suggestions, setSuggestions] = useState([]);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, []); // The empty array ensures the effect runs only once after the initial render
+  
+  function fetchSuggestions(){
+    fetch('/PHP/asap/TitleRequests.php')
+    //fetch('/staticData.json')
+      .then(response => response.json())
+      .then(data => groupData(data));
+  }
+  function groupData(data) {
+    var groupedArray = [[], [], [], [], []]
+    for (var row of data) {
+      groupedArray[(row.status - 1)].push(row);
+    }
+
+    setSuggestions(groupedArray[2])
+  }
+
+
+  useEffect(() => {
+    console.log(suggestions);
+  }, [suggestions]);
   return (
-    <DataGrid rows={rows} columns={columns} />
+    <DataGrid rows={suggestions} columns={columns} />
   );
 }
